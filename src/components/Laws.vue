@@ -2,22 +2,32 @@
   <div class="hello">
     <div class="holder">
       
-      <form @submit.prevent="addSkill">
+      <form @submit.prevent="addLaw">
+        <input type="text" autocomplete="off" placeholder="Nomeie a lei que você deseja observar" 
+        v-model="name" v-validate="'min:5'" name="name">
+        <transition name="alert-in" 
+          leave-active-class="animated flipOutX"
+          enter-active-class="animated flipInX">
+          <p class="alert" v-if="errors.has('name')">{{errors.first('name')}}</p>
+        </transition>
+        
         <input type="text" autocomplete="off" placeholder="Observar uma lei: ex http://www.planalto.gov.br/ccivil_03/Leis/L10000.htm" 
-        v-model="skill" v-validate="'min:5'" name="skill">
+        v-model="url" v-validate="'min:5'" name="url">
         
         <transition name="alert-in" 
           leave-active-class="animated flipOutX"
           enter-active-class="animated flipInX">
-          <p class="alert" v-if="errors.has('skill')">{{errors.first('skill')}}</p>
+          <p class="alert" v-if="errors.has('url')">{{errors.first('url')}}</p>
         </transition>
+
+        <button class="button" type="submit">Observar</button>        
       </form>
 
       <ul>
         <transition-group name="list" leave-active-class="animated bounceOutDown" enter-active-class="animated bounceInUp">
           <li v-for="(data, index) in laws" :key='index'>
-            {{data.name}}
-            <i class="fa fa-minus-circle" v-on:click="remove(index)"></i> 
+            <span class="url">{{data.url}}</span><span class="name">{{data.name}}</span>
+            <router-link :to="{ name: 'historico', params: { id: data._id }}">Ver histórico</router-link>
           </li>
         </transition-group>
       </ul>
@@ -37,22 +47,26 @@ export default {
   data() {
     return {
       laws:[],
-      skill: "",
+      name: "",
+      url: "",
     }
   },
   methods: {
-    addSkill() {
+    addLaw() {
       this.$validator.validateAll().then((result) => {
         if(result) {
-          this.skills.push( { skill: this.skill } )
-          this.skill = "";
+          this.$http.post('http://localhost:3000/api/laws', {name: this.name, url: this.url}).then(response => {
+            this.laws.push( { name: this.name, url: this.url } )
+            this.law = "";
+          })
+          
         } else {
           //console.log('Not valid');
         }
       })
     },
     remove(id) {
-      this.skills.splice(id, 1)
+      this.laws.splice(id, 1)
     }
   },
   mounted() {
@@ -78,6 +92,8 @@ export default {
     margin: 0;
     padding: 0;
     list-style-type: none;
+    float:left;
+    width: 100%;
   }
   
   ul li {
@@ -88,6 +104,14 @@ export default {
     margin-bottom: 2px;
     color: #3E5252;
   }
+
+  li a {
+    font-size: 14px;
+    float:right;
+    color: #333;
+    text-decoration: none;
+  }
+
   p {
     text-align:center;
     padding: 30px 0;
@@ -140,4 +164,30 @@ export default {
     float:right;
     cursor:pointer;
   }
+
+  button {
+    background-color: #9bb3c1;
+    color: white;
+    font-size: 22px;
+    border:none;
+    padding: 20px;
+    float:right;
+    width: 100%;
+  }
+
+  
+  .name {
+    font-size: 10px;
+    background-color: #fc0;
+    padding: 5px;
+    float:left;
+    margin-right: 10px;
+    box-shadow: 1px 1px 1px #333;
+  }
+
+  .url {
+    font-size: 14px;
+  }
+
+ 
 </style>
